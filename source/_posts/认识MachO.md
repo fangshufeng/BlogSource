@@ -7,12 +7,13 @@ toc:
     true
 ---
 
+
 ###  简介
 
 MachO文件是mac平台上一类文件的简称，它的类型有以下种类，可以在`#import <mach-o/loader.h>`文件中找到
 
 
-```mm
+```
 #define	MH_OBJECT	0x1		/* relocatable object file */
 #define	MH_EXECUTE	0x2		/* demand paged executable file */
 #define	MH_FVMLIB	0x3		/* fixed VM shared library file */
@@ -83,7 +84,7 @@ MachO文件是mac平台上一类文件的简称，它的类型有以下种类，
 ##### 2.1.1 `fat_header` 结构
 
 
-```mm
+```c++
 struct fat_header {
 	uint32_t	magic;		/* FAT_MAGIC or FAT_MAGIC_64 */
 	uint32_t	nfat_arch;	/* number of structs that follow */
@@ -99,7 +100,7 @@ struct fat_header {
 
 `2.1.1` 说到`fat_header`的`nfat_arch`会描述有多少个架构，其实架构的类型就是`fat_arch`类型的，结构如下
 
-```mm
+```c++
 struct fat_arch {
 	cpu_type_t	cputype;	/* cpu specifier (int) */
 	cpu_subtype_t	cpusubtype;	/* machine specifier (int) */
@@ -127,7 +128,7 @@ struct fat_arch {
 
 `otool -f /Users/fangshufeng/Desktop/thirdPart/macho/MochO/MochO/exccute/`
 
-```mm
+```c++
 MochO_arm_fat
 
 Fat headers
@@ -169,7 +170,7 @@ architecture 1
 
 ##### 2.2.1 `结构`
 
-```mm
+```c++
 struct mach_header {
 	uint32_t	magic;		/* mach magic number identifier */
 	cpu_type_t	cputype;	/* cpu specifier */
@@ -188,7 +189,7 @@ struct mach_header {
 4. `sizeofcmds`：接下来`load commands`的大小，后面会介绍；
 5. `flags`：文件的表示信息，值如下：
 
-    ```
+    ```c++
     /* Constants for the flags field of the mach_header */
     #define    MH_NOUNDEFS 0x1     /* the object file has no undefinedreferences */
     #define    MH_INCRLINK 0x2     /* the object file is the output of an
@@ -214,7 +215,7 @@ struct mach_header {
 
 同样使用`otool`也是可以的
 
-```mm
+```c++
 ➜  MochO otool -h exccute/MochO_x86
 Mach header
       magic cputype cpusubtype  caps    filetype ncmds sizeofcmds      flags
@@ -224,7 +225,7 @@ Mach header
 
 上面显示该文件的类型为`MH_EXECUTE`，`Load Commands`的数量为21个，数一下确实是21个。
 
-![15434132636545.jpg](https://upload-images.jianshu.io/upload_images/3279997-590d6b8c401886ac.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240/h/500)
+![15434132636545.jpg](https://upload-images.jianshu.io/upload_images/3279997-590d6b8c401886ac.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 也就是说`mach_header`更多的是对`load Commands`的描述
@@ -234,7 +235,7 @@ Mach header
 
 `load Commands`是由很多的`LC_Type`组成的，而`LC_Type`有很多种,可在文件`loader.h`文件中查看，这边就列出前几种
 
-```mm
+```c++
 /* Constants for the cmd field of all load commands, the type */
 #define	LC_SEGMENT	0x1	/* segment of this file to be mapped */
 #define	LC_SYMTAB	0x2	/* link-edit stab symbol table info */
@@ -246,7 +247,7 @@ Mach header
 而每个`LC_Type`都会有一个头部`load_command`结构如下
 
 
-```mm
+```c++
 struct load_command {
 	uint32_t cmd;		/* type of load command */
 	uint32_t cmdsize;	/* total size of command in bytes */
@@ -261,7 +262,7 @@ struct load_command {
 
 也就是下面这张图
 
-![15434151220239.jpg](https://upload-images.jianshu.io/upload_images/3279997-013a9e401f5eb016.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/600)
+![15434151220239.jpg](https://upload-images.jianshu.io/upload_images/3279997-013a9e401f5eb016.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 ##### 2.3.1 `LC_SEGMENT`
@@ -269,7 +270,7 @@ struct load_command {
 为了方便管理，程序在内存中是分段管理的，先来看看`LC_Type`其中一种`LC_SEGMENT`的结构
 
 
-```mm
+```c++
 struct segment_command { /* for 32-bit architectures */
 	uint32_t	cmd;		/* LC_SEGMENT */
 	uint32_t	cmdsize;	/* includes sizeof section structs */
@@ -301,7 +302,7 @@ struct segment_command { /* for 32-bit architectures */
 常见的`LC_SEGMENT`有以下几种
 
 
-```mm
+```c++
 #define	SEG_PAGEZERO	"__PAGEZERO"
 #define	SEG_TEXT	"__TEXT"	/* the tradition UNIX text segment */
 #define	SEG_DATA	"__DATA"	/* the tradition UNIX data segment */
@@ -328,14 +329,14 @@ struct segment_command { /* for 32-bit architectures */
 
 数据段，包含了可读写数据。常见的`section`如下
 
-![15434509398356.jpg](https://upload-images.jianshu.io/upload_images/3279997-6804d0b16e57f7a2.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/800/h/400)
+![15434509398356.jpg](https://upload-images.jianshu.io/upload_images/3279997-6804d0b16e57f7a2.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 ##### 2.3.2 `LC_DYLD_INFO_ONLY`
 
 `LC_DYLD_INFO_ONLY`和`LC_DYLD_INFO`是同一个结构
 
-```mm
+```c++
 struct dyld_info_command {
    uint32_t   cmd;      /* LC_DYLD_INFO or LC_DYLD_INFO_ONLY */
    uint32_t   cmdsize;      /* sizeof(struct dyld_info_command) */
@@ -376,7 +377,7 @@ struct dyld_info_command {
 这里面记录着所有的符号信息
 
 
-```mm
+```c++
 struct symtab_command {
 	uint32_t	cmd;		/* LC_SYMTAB */
 	uint32_t	cmdsize;	/* sizeof(struct symtab_command) */
@@ -411,7 +412,7 @@ struct symtab_command {
 `Symbol Table`装着都是结构`nlist_64`或者`nlist`可以`see <mach-o/nlist.h> `
 
 
-```mm
+```c++
 struct nlist_64 {
     union {
         uint32_t  n_strx; /* index into the string table */
@@ -424,10 +425,11 @@ struct nlist_64 {
 
 ```
 
-1. `n_type`: 可选的值有`N_STAB`、`N_PEXT`、`N_TYPE`、`N_EXT`；
-2. `n_sect`： `section`的类型，要么就是`NO_SECT`；
-3. `n_desc`：
-4. `n_value`: 符号对应的地址
+1. `n_strx`: 在`String Table`中的索引值；
+2. `n_type`: 可选的值有`N_STAB`、`N_PEXT`、`N_TYPE`、`N_EXT`；
+3. `n_sect`： `section`的类型，要么就是`NO_SECT`；
+4. `n_desc`：
+5. `n_value`: 符号对应的地址
 
 这里以`AppDelegate`的符号`_OBJC_CLASS_$_AppDelegate`来演示
 
@@ -458,7 +460,7 @@ struct nlist_64 {
 到这是不是觉得特别熟悉呢，我们把`AppDelegate`的代码用`c++`看下
 
 
-```mm
+```
 
 xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc AppDelegate.m
 
@@ -467,7 +469,7 @@ xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc AppDelegate.m
 可以看到
 
 
-```mm
+```c++
 extern "C" __declspec(dllexport) struct _class_t OBJC_CLASS_$_AppDelegate __attribute__ ((used, section ("__DATA,__objc_data"))) = {
 	0, // &OBJC_METACLASS_$_AppDelegate,
 	0, // &OBJC_CLASS_$_UIResponder,
@@ -497,7 +499,7 @@ static void OBJC_CLASS_SETUP_$_AppDelegate(void ) {
 
 看下`_class_ro_t`的结构
 
-```mm
+```c++
 struct _class_ro_t {
 	unsigned int flags;
 	unsigned int instanceStart;
@@ -516,7 +518,7 @@ struct _class_ro_t {
 
 这个结构也即是我们截图的内容真好匹配
 
-```mm
+```c++
 
 static struct _class_ro_t _OBJC_CLASS_RO_$_AppDelegate __attribute__ ((used, section ("__DATA,__objc_const"))) = {
 	0, 
@@ -542,7 +544,7 @@ static struct _class_ro_t _OBJC_CLASS_RO_$_AppDelegate __attribute__ ((used, sec
 
 每一个item对应的就是`_objc_method`
 
-```mm
+```c++
 struct _objc_method {
 	struct objc_selector * _cmd;
 	const char *method_type;
@@ -566,7 +568,7 @@ struct _objc_method {
 
 ##### 2.3.4 `LC_DYSYMTAB`
 
-这里记录着所有的动态链接是需要的符号信息
+这里记录着所有的动态链接时需要的符号信息
 
 ![15434758929962.jpg](https://upload-images.jianshu.io/upload_images/3279997-c2800908c429db6e.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
@@ -575,8 +577,14 @@ struct _objc_method {
 
 ![15434760343894.jpg](https://upload-images.jianshu.io/upload_images/3279997-1dfa92a929246fba.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-很有很多没有截取了，比如这些`_NSFullUserName`这些在链接的时候回去动态解析这些符号表
+还有很多没有截取了，比如这些`_NSFullUserName`这些在链接的时候回去动态解析这些符号表
 
+这个`Indirect Symbols`包含了所有和动态库相关的符号，包括`__DATA,__la_symbol_ptr`、`__DATA,__nl_symbol_ptr`、`__DATA,__got`，这个表有以下用处：
+
+1. 通过这个表的`Symbol`可以找到在符号表`Symbol Table`的位置，从而在字符串表`String Table`中找到名称；
+2. 通过这个表的`Indirect Address`可以在`__DATA,__la_symbol_ptr`、`__DATA,__nl_symbol_ptr`、`__DATA,__got`中找到方法的地址
+
+[fishook](https://github.com/facebook/fishhook)就用到了这个，后面我会单独来介绍这个库的实现原理
 
 ##### 2.3.5 `LC_MAIN`
 
@@ -599,7 +607,7 @@ struct _objc_method {
 
 ![15434765147302.jpg](https://upload-images.jianshu.io/upload_images/3279997-855f2bf69abf3767.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-```mm
+```c++
 
 struct dylib {
     union lc_str  name; /* library's path name */
@@ -618,6 +626,8 @@ struct dylib_command {
 ```
 
 ##### 2.3.7 `LC_RPATH`
+
+`Runpath`的简写
 
 程序运行链接路径
 
@@ -658,8 +668,56 @@ xcode中可以看到
 
 关于签名的后面打算单独写一篇
 
+#### 2.4 section
+
+结构如下
+
+```c++
+struct section_64 { /* for 64-bit architectures */
+	char		sectname[16];	/* name of this section */
+	char		segname[16];	/* segment this section goes in */
+	uint64_t	addr;		/* memory address of this section */
+	uint64_t	size;		/* size in bytes of this section */
+	uint32_t	offset;		/* file offset of this section */
+	uint32_t	align;		/* section alignment (power of 2) */
+	uint32_t	reloff;		/* file offset of relocation entries */
+	uint32_t	nreloc;		/* number of relocation entries */
+	uint32_t	flags;		/* flags (section type and attributes)*/
+	uint32_t	reserved1;	/* reserved (for offset or index) */
+	uint32_t	reserved2;	/* reserved (for count or sizeof) */
+	uint32_t	reserved3;	/* reserved */
+};
+```
+
+这里只列举了`section64`位的，`section`可以自己在`#include <mach-o/loader.h>`查看
+
+1. `sectname`：当前`section`的名字;
+2. `segname`：位于哪个`segment`;
+3. `addr`:当前`section`在内存中的地址；
+4. `size`:当前的`section`所占的内存大小；
+5. `offset`：当前`section`的偏移量；
+6. `reloff`: 抱歉暂时没找到实际的用处，不做解释,以免误人子弟；
+7. `nreloc`：这个就是表示上面`reloff`的数量；
+8. `flags`: 这个是当前`section`的标志位，包括`sectionType`和`sectionAttribute`,一个`section`可以有多个属性，但是只能有一个类型，这个很好理解了，可以通过位运算分别获取类型和属性，`(section->flags & SECTION_TYPE`、`section->flags & SECTION_ATTRIBUTES`
+9. `reserved1`：这是个保留字段，它可以表示偏移量也可以用来表示索引，一般用来表示`Indirect Symbol Index`也就是间接索引表的位置，你可以在`__got`、`__subs`等中可以查看；
+10. `reserved3`：也是个保留字段，一般表示数量的，比如在`__subs`section中就表示`subs`的个数；
+11. `reserved3`：这个真是个保留字段了，暂时没什么用处
+
+
+随意截取一个`section`看下结构吧
+
+![15538261885093](http://upload-images.jianshu.io/upload_images/3279997-d5c11afc2c29c1e6.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+
+
 
 本篇完。
+
+
+
+
+
 
 
 

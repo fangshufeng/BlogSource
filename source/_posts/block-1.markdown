@@ -9,13 +9,13 @@ tag:
 ---
 
 
-##基本知识点回顾
+## 基本知识点回顾
 
 我们知道按照变量的作用域划分的话，变量可划分为`局部变量`和`全局变量`，而`局部变量`又分为`自动变量`和`静态变量`，`全局变量`分为`静态全局变量`和`非静态全局变量`
 
 <!-- more -->
 
-```
+```mm
 #import <Foundation/Foundation.h>
 
 
@@ -46,11 +46,11 @@ int main(int argc, const char * argv[]) {
 ![](https://upload-images.jianshu.io/upload_images/3279997-162bcc43e900e88b.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
-##Block的内存结构
+## Block的内存结构
 
 新建一个命令行项目 `mian.m`
 
-```
+```mm
 #import <Foundation/Foundation.h>
 
 int main(int argc, const char * argv[]) {
@@ -73,7 +73,7 @@ xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m
 得到c++的代码,找到`main`函数的实现为以下代码，
 
 
-```
+```mm
 int main(int argc, const char * argv[]) {
     /* @autoreleasepool */ { __AtAutoreleasePool __autoreleasepool; 
 
@@ -99,7 +99,7 @@ int main(int argc, const char * argv[]) {
 `__main_block_impl_0` 相关的结构以及相关说明如下
 
 
-```
+```mm
 //__main_block_impl_0 
 
 struct __main_block_impl_0 {
@@ -151,7 +151,7 @@ static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
 
 接下来改造下`main.m`的代码
 
-```
+```mm
 #import <Foundation/Foundation.h>
 
 int main(int argc, const char * argv[]) {
@@ -174,7 +174,7 @@ int main(int argc, const char * argv[]) {
 
 输出
 
-```
+```mm
 __NSGlobalBlock__
 __NSGlobalBlock
 NSBlock
@@ -189,12 +189,12 @@ NSObject
 
 ![15346658296514.jpg](https://upload-images.jianshu.io/upload_images/3279997-e0f48d079d407a06.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-##Block调用
+## Block调用
 
 上面说的都是`block`的申明，关于`block`调用就是下面这行代码了
 
 
-``` 
+``` mm
 
 block();
 
@@ -223,7 +223,7 @@ block();
 
 接下来验证以下
 
-```
+```mm
 struct __main_block_impl_0 {
   struct __block_impl impl;
   struct __main_block_desc_0* Desc;
@@ -243,7 +243,7 @@ struct __main_block_impl_0 {
 
 再讲`main`代码改为
 
-```
+```mm
 int a  = 10;
 static int b  = 10;
 
@@ -379,7 +379,7 @@ myBlock9:__NSMallocBlock__
 `block`作为函数返回值
 
 
-```
+```mm
 typedef   void (^myBlock) (void);
 
 myBlock  func() {

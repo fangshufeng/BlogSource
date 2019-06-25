@@ -8,42 +8,35 @@ tag:
     Objective-C
 ---
 
+
 上篇讲到了`Block`其实就是`oc对象`
 
-本文主要讲解`Block值捕获`以及如何修改`block`捕获的变量,说明下本文的目录结构
 
-1. Block是如何捕获变量的
 
-    * 捕获的是auto局部变量
-        * 基本数据类型
-        * 对象类型
-    * 捕获的是非auto变量（static变量的和全局变量）
-        * 基本数据类型
-        * 对象类型
+本文主要讲解`Block值捕获`以及如何修改`block`捕获的变量,说明下本文的目录结构（简书竟然没做目录功能，有点失望，给个简书生成目录的[链接](https://blog.csdn.net/Wonder233/article/details/78558307)吧）
 
-2. Block捕获对对象的引用计数的影响
 
-    * 对象类型
+注意把示例中的这行代码改成下面的形式，否则无效
 
-3. __block如何做到可以修改变量的
-
-    * __block变量的内存结构
+```
+// @match        https://www.jianshu.com/p/*
+```
 
 
 <!-- more -->
-
 ---
  
-## 一、Block是如何捕获变量的
+##  一、Block是如何捕获变量的
 
-#### (I) auto变量
+### 1.1 局部变量
 
+####  1.1.1  auto类型变量
 
-**当变量是基本数据类型**
+##### 1.1.1.1 基本数据类型
 
 修改下`main.m`的代码
 
-```
+```mm
 #import <Foundation/Foundation.h>
 
 int main(int argc, const char * argv[]) {
@@ -70,7 +63,7 @@ int main(int argc, const char * argv[]) {
 转成`C++`代码发现有些变化了
 
 
-```
+```mm
 struct __main_block_impl_0 {
   struct __block_impl impl;
   struct __main_block_desc_0* Desc;
@@ -105,13 +98,14 @@ int main(int argc, const char * argv[]) {
 `变化2`：调用block的时候除了传递block本身外，把`a`的值也就是10传递给了里面的变量`a`
 `变化3`：最后方法执行的地方`__main_block_func_0`也是把`block`的变量`a`取出 
 
-**当变量是对象数据类型时**
+##### 1.1.1.2 对象数据类型
+
 
 原来`block`的结构还不是定的，会随着拥有的变量改变内存结构
 
 再举个例子来进一步理解下`值捕获`，改造下代码
 
-```
+```mm
 #import <Foundation/Foundation.h>
 
 int main(int argc, const char * argv[]) {
@@ -132,7 +126,7 @@ int main(int argc, const char * argv[]) {
 输出
 
 
-```
+```mm
 进入block前的地址----0x100001078
 修改name之后的地址----0x1000010d8
 进入block的地址----jack--0x100001078
@@ -141,7 +135,7 @@ int main(int argc, const char * argv[]) {
 `c++`代码，这次简单写下就是多了个`*name`属性
 
 
-```
+```mm
 struct __main_block_impl_0 {
  ...
   NSString *name;
@@ -161,12 +155,14 @@ struct __main_block_impl_0 {
 
 ---
 
+####  1.1.2  static类型变量
 
-**当变量是static时**
+
+##### 1.1.2.1 对象类型
 
 接着我们再次修改下代码
 
-```
+```mm
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
     
@@ -192,7 +188,7 @@ int main(int argc, const char * argv[]) {
 这次的结果完全不一样了，这又是为什么呢，继续看c++的实现
 
 
-```
+```mm
 struct __main_block_impl_0 {
     ...
     NSString **name;  // 1
@@ -226,13 +222,15 @@ int main(int argc, const char * argv[]) {
 也就是红色箭头的变化
 ![15341552229497.jpg](https://upload-images.jianshu.io/upload_images/3279997-d30999d244aa7add.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
+### 1.2 全局变量
 
-#### (II) 捕获的是非auto变量（static变量的和全局变量）
+#### 1.2.1  非static修饰的全局变量
 
+##### 1.2.1.1 对象类型
 
 **当变量是全局的变量时**
 
-```
+```mm
 
 NSString *name  = @"jack";
 
@@ -260,7 +258,7 @@ int main(int argc, const char * argv[]) {
 额，这又是怎么回事呢，看源码吧
 
 
-```
+```mm
 NSString *name = (NSString *)&__NSConstantStringImpl__var_folders_s2_zmz_wcdj2px2kh6hm1zkcd780000gp_T_main_3b419d_mi_0;
 
 
@@ -299,6 +297,14 @@ int main(int argc, const char * argv[]) {
 
 我们可以发现这个时候`block`内部并没有像之前那样生成一个同名的变量，也就是对于全局变量`block`是不会捕获的,当变量是`static`全局变量时也和全局变量一样，留给读者自行测试了
 
+##### 1.2.1.2 基本类型
+
+略...
+
+#### 1.2.2  static修饰的全局变量 
+
+略... 读者自行写demo
+
 
 **说了这么多我们来梳理下，我们思考一个问题，`block`为什么要捕获变量，是因为里面有个方法，方法需要使用变量，**
 
@@ -311,13 +317,15 @@ int main(int argc, const char * argv[]) {
 
 ## 二、 Block捕获对对象的引用计数的影响
 
+### 2.1 `__NSMallocBlock__`对对象的引用计数的影响 `ARC`环境
+
 我们知道基本数据类型是放在栈中的，回收是由系统自动回收的无需考虑，所以我们这里只考虑auto类型的对象类型的引用计数
 
 需要新增一个`MyPerson`类
 
 
 
-```
+```mm
 //MyPerson.h
 #import <Foundation/Foundation.h>
 
@@ -341,7 +349,7 @@ int main(int argc, const char * argv[]) {
 `main.m`代码如下
 
 
-```
+```mm
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
   
@@ -368,7 +376,7 @@ int main(int argc, const char * argv[]) {
 
 输出
 
-```
+```mm
 __NSMallocBlock__
 ```
 
@@ -381,7 +389,7 @@ __NSMallocBlock__
 
 此时输出
 
-```
+```mm
 __NSMallocBlock__
 --[MyPerson dealloc]
 ```
@@ -392,6 +400,8 @@ __NSMallocBlock__
 
 ---
 
+### 2.2 `__NSStackBlock__`对对象的引用计数的影响 `MRC`环境
+
 把项目改成`MRC`
 
 ![15351618498306.jpg](https://upload-images.jianshu.io/upload_images/3279997-60cbb1cb9f2f89de.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
@@ -399,7 +409,7 @@ __NSMallocBlock__
 
 `MyPerson`
 
-```
+```mm
 #import "MyPerson.h"
 
 @implementation MyPerson
@@ -445,6 +455,8 @@ block类型---__NSMallocBlock__
 **说明`__NSMallocBlock__`类型的`myBlock`会对`__strong`修饰的`p`对象的引用计数产生影响**
 
 
+### 2.3 结论
+
 **得出以下结论：**
     
 1. 当block内部访问了对象类型的auto变量时
@@ -461,10 +473,13 @@ block类型---__NSMallocBlock__
 
 ## 三、__block如何做到可以修改变量的
 
-####__block变量的内存结构
+
+由前面的了解我们知道block要想可以修改变量，那么就不能值捕获，也就是不能放在栈内存中，因为栈内存是的释放无法控制，所以要买放在全局区，要么放在堆区，来看下苹果是放在哪里的。
+
+#### 3.1 __block变量的内存结构
 
 
-```
+```mm
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
     
@@ -486,7 +501,7 @@ int main(int argc, const char * argv[]) {
 像这样在`block`的内部直接修改变量是会报错的， 要想修改需要借助`__block`修饰符
 
 
-```
+```mm
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
     
@@ -519,7 +534,7 @@ int main(int argc, const char * argv[]) {
 
 一行`__block  MyPerson *p = [[MyPerson alloc] init];`就变成了初识化一个`__Block_byref_p_0`类型的结构体，然后把该结构体的指针给到`myBlock`，而我们初始化的那个`p`则给了`__Block_byref_p_0`内部的`p`对象
 
-####__block变量的内存管理
+#### 3.2 __block变量的内存管理
 
 1. 当__block变量在栈上时，不会对指向的对象产生强引用
 
@@ -539,7 +554,7 @@ _Block_object_dispose函数会自动释放指向的对象（release）
 
 这里的`Block0`相当于`myBlock`，`__block`变量就是`p`,`15`行的时候变量`MyPerson`类型的变量`p`，就变成了指向`__Block_byref_p_0`类型的指针了，且处于栈中，到了`21`行结束，由于是arc环境,`myBlock`就是为右边的`block`copy后的处于`堆`上了,这是变量`p`也会被拷贝到堆上，当`23`执行的时候调用的就是堆上的`block`，访问的也是堆上的内容，对于`block`内部的`NSLog(@"---%@",p.name);`则是结构体`p`内部的`MyPerson`类型的`p`对象
 
-####__block的__forwarding指针
+#### 3.3 __block的__forwarding指针
 
 可以看到`__Block_byref_p_0`结构如下
 
@@ -567,6 +582,11 @@ _Block_object_dispose函数会自动释放指向的对象（release）
 
 ![15351817089007.jpg](https://upload-images.jianshu.io/upload_images/3279997-671ebf6ca1c4aa0b.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
+
+
+可以看出苹果的实现是通过把变量放在堆区的方式来实现修改`__block`捕获的变量的，也可以看出`__block`对对象的内存影响还是蛮大的。
+
+(完)
 
 
 
